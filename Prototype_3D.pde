@@ -29,7 +29,7 @@ boolean gouraud = true;
 
 dot3d light;
 dot3d nlight;
-int camera_angle = 490;
+int camera_angle = 250;
 dot3d camera = new dot3d(0, 0, 0);
 
 tri2d[] visTris = new tri2d[maxFaces];

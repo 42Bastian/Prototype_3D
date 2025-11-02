@@ -82,9 +82,9 @@ cube.setPos(100, 50, 500);
   lix = plsz_x*grid/2;
   liy = 100;
   far_z = radius*grid;
-  camera.x = 0*256;
-  camera.y = 50;
-  camera.z = 0*256;
+  camera.x = 200*256;
+  camera.y = 20;
+  camera.z = 930*256;
 }
 String h(int n)
 {
