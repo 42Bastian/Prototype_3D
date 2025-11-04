@@ -147,7 +147,7 @@ void create_plane(dot3d camera, int angle)
     for (int ix = 0; ix < dia; ++ix, ++x) {
       ox = x & (plsz_x-1);
       oz = z & (plsz_z-1);
-
+      
       int norg = ox+oz*plsz_x;
       int wx = x*grid-camera.x/256;
       int wz = z*grid-camera.z/256;
@@ -184,12 +184,12 @@ void create_plane(dot3d camera, int angle)
         continue;
       }
 
-      triangles[n] = new Tri(p0,p1,p2,col[idx]);
+      triangles[n] = new Tri(p0, p1, p2, col[idx]);
       normals_rotated[n] = rotY(normals[idx], angle);
-     
+
       ++n;
 
-      triangles[n] = new Tri(p1,p3,p2,col[idx+1]);
+      triangles[n] = new Tri(p1, p3, p2, col[idx+1]);
       normals_rotated[n] = rotY(normals[idx+1], angle);
       ++n;
     }
@@ -199,7 +199,7 @@ void create_plane(dot3d camera, int angle)
 
   plane = new Object(normals_rotated, vnormals_rotated, plx, ply, plz, triangles);
 
- // println("Tris:",n,"<",(dia-1)*(dia-1)*2);
+  // println("Tris:",n,"<",(dia-1)*(dia-1)*2);
   /**/
   /**/
   //exportPlaneAsArrays("/Users/bastian/tmp/planex.inc", px, py, pz);

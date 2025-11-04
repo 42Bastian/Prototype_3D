@@ -29,7 +29,7 @@ boolean gouraud = true;
 
 dot3d light;
 dot3d nlight;
-int camera_angle = 250;
+int camera_angle = 490;
 dot3d camera = new dot3d(0, 0, 0);
 
 tri2d[] visTris = new tri2d[maxFaces];
@@ -320,18 +320,16 @@ void draw()
       }
       break;
     case '5':
-      if ( camera_angle < 256 ) {
-        camera.x -= 10;
-      } else {
-        camera.x += 10;
-      }
-      break;
     case '6':
-      if ( camera_angle < 256 ) {
-        camera.x += 10*256;
-      } else {
-        camera.x -= 10*256;
-      }
+       dx = -(4*si(camera_angle+128)+127)>>(15-8);
+       dz = (4*co(camera_angle+128)+127)>>(15-8);
+       if ( key == '5' ){
+         camera.x += dx;
+         camera.z += dz;
+       } else {
+         camera.x -= dx;
+         camera.z -= dz;
+       }         
       break;
     case 'q':
       liy += 10;
