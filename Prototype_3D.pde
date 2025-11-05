@@ -40,6 +40,7 @@ Object torus2;
 Object plane;
 Object plane2;
 Object cube;
+Object ball;
 
 void settings()
 {
@@ -205,7 +206,8 @@ void draw()
 
   nlight = light = rotY(light, camera_angle);
   nlight.normalize();
-
+  light.normalize();
+  //println(light.x,light.y, light.z);
   //println("---");
   visibleFaces = 0;
   max_z = -1000;
@@ -259,10 +261,14 @@ void draw()
   plane.project();
   addObject(plane);
   /**/
-
+  ball.rotate(0, ax, 0, camera);
+  ball.visible();
+  ball.project();
+  addObject(ball);
+  
   render();
+  
   fill(200, 200, 0);
-
   text("ax:"+lix, 5, 10);
   text("ay:"+liy, 5, 40);
   text("az:"+liz, 5, 70);
@@ -373,7 +379,6 @@ void draw()
 
   camera_angle &= 511;
 
-
   if ( !mousePressed ) {
     ++ax;
     ax &= 511;
@@ -394,6 +399,7 @@ void draw()
    }
    lix = rez_x*scale/2-mouseX;
    */
+   
   /**
    if ( round(frameRate) != last_framerate ){
    println(round(frameRate));

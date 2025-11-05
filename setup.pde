@@ -17,6 +17,7 @@ void setup()
   light.normalize();
   println("Light:", light.x, light.y, light.z);
 
+  setupBall();
   cube = new Object(cx, cy, cz, cube_faces.length/3);
   int[] cc = new int[]{
     255<<16, 255<<8, 255,
@@ -78,13 +79,13 @@ cube.setPos(100, 50, 500);
   torus2.setPos(new dot3d(0, 00, 800));
   create_planey();
 
-  liz = plsz_z*grid/2;
-  lix = plsz_x*grid/2;
-  liy = 100;
+  liz = 0;
+  lix = 1000;
+  liy = 200;
   far_z = radius*grid;
-  camera.x = 200*256;
-  camera.y = 20;
-  camera.z = 930*256;
+  camera.x = 0*256;
+  camera.y = 100;
+  camera.z = 0*256;
 }
 String h(int n)
 {
