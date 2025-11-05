@@ -221,8 +221,8 @@ void draw()
     torus.pos.z = camera.z;
   }
   torus.pos.y = 0;
-  torus.setPos(-100, 40, 500);
-  torus.rotate(0, ax, 0, camera);
+  torus.setPos(-100, 100, 500);
+  torus.rotate(ax, 0, ax, camera);
   //torus.move(camera);
 
   torus.visible();
@@ -261,7 +261,7 @@ void draw()
   plane.project();
   addObject(plane);
   /**/
-  ball.rotate(0, ax, 0, camera);
+  ball.rotate(0,ax*2,0, camera);
   ball.visible();
   ball.project();
   addObject(ball);
