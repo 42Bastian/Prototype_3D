@@ -6,7 +6,7 @@ PFont f;
 boolean fill = !false;
 
 int COL_FP = 8;
-
+boolean exportPlane = false;
 int ax = 0;
 int ay = 0;
 int az = 0;
@@ -14,7 +14,8 @@ int visibleFaces = 0;
 int di_x = 512;
 int di_y = 512;
 int far_z;
-int far_x = 1000;
+int near_z = 10;
+int far_x;
 int rez_x = 384;
 int rez_y = 200;
 int max_z;
@@ -22,14 +23,14 @@ int MAX_Z_LVL = 256;
 int lix;
 int liy;
 int liz;
-int ambient = int(255*0.2);
+int ambient = int(255*0.1);
 boolean directed = !true;
 boolean darken = !false;
 boolean gouraud = true;
 
 dot3d light;
 dot3d nlight;
-int camera_angle = 490;
+int camera_angle = 0;
 dot3d camera = new dot3d(0, 0, 0);
 
 tri2d[] visTris = new tri2d[maxFaces];
@@ -104,6 +105,7 @@ class tri2d {
     int _p1 = obj.triangles[index].p1;
     if ( _gouraud ) {
       l = obj.lv[obj.triangles[index].p1];
+     
     }
     p1 = new dot2d(obj.px[_p1], obj.py[_p1], col, l);
 
@@ -129,14 +131,6 @@ class tri2d {
   int next;
 };
 
-
-boolean faceIsVisible(dot3d v, dot3d normal)
-{
-  if ( v.z < -grid) return false;
-  if ( v.z > far_z ) return false;
-  return dot3d.dotProduct(normal, v) > 0;
-}
-
 int zscale(int z)
 {
   int help = (MAX_Z_LVL<<8)/far_z;
@@ -150,6 +144,7 @@ void addObject(Object obj)
 {
   for (int fc = 0; fc < obj.nTriangles; ++fc) {
     if ( obj.alwaysVisible || obj.visibility[fc] ) {
+      //println(obj.luminity[fc]);
       tri2d t = new tri2d(obj, fc);
       visTris[visibleFaces] = t;
 
@@ -203,10 +198,11 @@ void draw()
   //ax = 88;
 
   light = new dot3d(-lix, -liy, -liz);
-
-  nlight = light = rotY(light, camera_angle);
-  nlight.normalize();
   light.normalize();
+  
+  nlight = light = rotY(light, camera_angle);
+  //nlight.normalize();
+  
   //println(light.x,light.y, light.z);
   //println("---");
   visibleFaces = 0;
@@ -220,17 +216,17 @@ void draw()
   } else {
     torus.pos.z = camera.z;
   }
-  torus.pos.y = 0;
-  torus.setPos(-100, 100, 500);
-  torus.rotate(ax, 0, ax, camera);
-  //torus.move(camera);
-
-  torus.visible();
-  torus.project();
-  // torus.dumpPoints(3);
-  addObject(torus);
-  //  }
-  /**/
+  /**
+   torus.pos.y = 0;
+   torus.setPos(-100, 100, 500);
+   if ( torus.in_sight(camera) ){
+   torus.rotate(0, ax, 0, camera);
+   torus.visible();
+   torus.project();
+   // torus.dumpPoints(3);
+   addObject(torus);
+   }
+   **/
   /**
    torus2.setPos(new dot3d( 0*si(ax*4)*80/(1<<14),0, 300));
    torus2.rotate(0, 128,0);
@@ -240,34 +236,39 @@ void draw()
    //  addObject(torus2);
    **/
   /**/
-  cube.pos.x += 2;
-  if ( cube.pos.x > plsz_x/2*grid) cube.pos.x -= plsz_x*grid;
+  //cube.pos.x += 2;
+  if ( cube.pos.x > worldsize/2*grid) cube.pos.x -= worldsize*grid;
   int cx = cube.pos.x/grid;
   int cz = cube.pos.z/grid;
 
-  int cx1 = (cx+1) & (plsz_x-1);
-  int cz1 = (cx+1) & (plsz_x-1);
-  int cy = planey[cx+cz*plsz_x]+planey[cx1+cz*plsz_x];//+planey[cx1+cz*plsz_x]+planey[cx1+cz1*plsz_x];
-  cube.pos.y = cy / 2 + 50;
-
-  //cube.setPos(100, 50, 500);
-  cube.rotate(0, 0, 0, camera);
-  cube.visible();
-  cube.project();
-  addObject(cube);
+  int cx1 = (cx+1) & (worldsize-1);
+  int cz1 = (cx+1) & (worldsize-1);
+  int cy;// = planey[cx+cz*worldsize]+planey[cx1+cz*worldsize];//+planey[cx1+cz*worldsize]+planey[cx1+cz1*worldsize];
+  //  cube.pos.y = cy / 2 + 50;
+  /**
+  cube.setPos(-120, 100, -220);
+  if ( cube.in_sight(camera) ) {
+    cube.rotate(0, 0, 0, camera);
+    cube.visible();
+    cube.project();
+    addObject(cube);
+  }
+  **/
+  /**
+  if ( ball.in_sight(camera) ) {
+    ball.rotate(0, 2*ax, ax, camera);
+    ball.visible();
+    ball.project();
+    addObject(ball);
+  }
+  **/
   /**/
   create_plane(camera, camera_angle);
-  plane.visible();
-  plane.project();
+  //plane.dumpPoints(2);
   addObject(plane);
   /**/
-  ball.rotate(0,ax*2,0, camera);
-  ball.visible();
-  ball.project();
-  addObject(ball);
-  
   render();
-  
+
   fill(200, 200, 0);
   text("ax:"+lix, 5, 10);
   text("ay:"+liy, 5, 40);
@@ -280,11 +281,11 @@ void draw()
   text("directed:"+directed, 290, 10);
   text("gouraud: "+gouraud, 290, 40);
 
-  int dx = -(4*si(camera_angle)+127)>>(15-8);
-  int dz = (4*co(camera_angle)+127)>>(15-8);
+  int dx = ((grid/16)*si(camera_angle)+127)>>(15-8);
+  int dz = ((grid/16)*co(camera_angle)+127)>>(15-8);
 
-  cx = (camera.x/grid/256) & (plsz_x-1);
-  cz = (camera.z/grid/256) & (plsz_x-1);
+  cx = (camera.x/grid/256) & (worldsize-1);
+  cz = (camera.z/grid/256) & (worldsize-1);
 
   if ( keyPressed ) {
     //println(dx,dz);
@@ -293,7 +294,7 @@ void draw()
       camera.y += 10;
       break;
     case '2':
-      if ( camera.y - 5 > planey[cx+cz*plsz_x] && camera.y > 15 ) {
+      if ( camera.y - 5 > planey[cx+cz*worldsize] && camera.y > 15 ) {
         camera.y -= 5;
       }
       break;
@@ -306,20 +307,21 @@ void draw()
         camera_angle -= 1;
         break;
       case UP:
-        cx = ((camera.x + 16*dx)/grid/256) & (plsz_x-1);
-        cz = ((camera.z + 16*dz)/grid/256) & (plsz_x-1);
+        cx = ((camera.x + 16*dx)/grid/256) & (worldsize-1);
+        cz = ((camera.z + 16*dz)/grid/256) & (worldsize-1);
         cy = camera.y;
-        if ( planey[cx+cz*plsz_x] < cy ) {
-          camera.x += dx;
+        //if ( planey[cx+cz*worldsize] < cy )
+        {
+          camera.x -= dx;
           camera.z += dz;
         }
         break;
       case DOWN:
-        cx = ((camera.x - 16*dx)/grid/256) & (plsz_x-1);
-        cz = ((camera.z - 16*dz)/grid/256) & (plsz_x-1);
+        cx = ((camera.x - 16*dx)/grid/256) & (worldsize-1);
+        cz = ((camera.z - 16*dz)/grid/256) & (worldsize-1);
         cy = camera.y;
-        if ( planey[cx+cz*plsz_x] < cy ) {
-          camera.x -= dx;
+        if ( planey[cx+cz*worldsize] < cy ) {
+          camera.x += dx;
           camera.z -= dz;
         }
         break;
@@ -327,15 +329,15 @@ void draw()
       break;
     case '5':
     case '6':
-       dx = -(4*si(camera_angle+128)+127)>>(15-8);
-       dz = (4*co(camera_angle+128)+127)>>(15-8);
-       if ( key == '5' ){
-         camera.x += dx;
-         camera.z += dz;
-       } else {
-         camera.x -= dx;
-         camera.z -= dz;
-       }         
+      dx = -(4*si(camera_angle+128)+127)>>(15-8);
+      dz = (4*co(camera_angle+128)+127)>>(15-8);
+      if ( key == '5' ) {
+        camera.x += dx;
+        camera.z += dz;
+      } else {
+        camera.x -= dx;
+        camera.z -= dz;
+      }
       break;
     case 'q':
       liy += 10;
@@ -365,6 +367,11 @@ void draw()
         directed = !directed;
       }
       break;
+    case 'i':
+      if ( lastKey != key ) {
+        darken = !darken;
+      }
+      break;
     default:
       /* empty */
     }
@@ -372,11 +379,8 @@ void draw()
   } else {
     lastKey = 0;
   }
-  if ( camera.z/256 < -plsz_z/2*grid) camera.z = plsz_z/2*grid*256;
-  if ( camera.z/256 >  plsz_z/2*grid) camera.z = -plsz_z/2*grid*256;
-  if ( camera.x/256 < -plsz_x/2*grid) camera.x = plsz_x/2*grid*256;
-  if ( camera.x/256 >  plsz_x/2*grid) camera.x = -plsz_x/2*grid*256;
-
+  camera.x = ((camera.x+8192*256) & (0x7fffff))-8192*256;
+  camera.z = ((camera.z+8192*256) & (0x7fffff))-8192*256;
   camera_angle &= 511;
 
   if ( !mousePressed ) {
@@ -399,7 +403,7 @@ void draw()
    }
    lix = rez_x*scale/2-mouseX;
    */
-   
+
   /**
    if ( round(frameRate) != last_framerate ){
    println(round(frameRate));

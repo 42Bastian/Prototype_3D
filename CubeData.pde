@@ -8,15 +8,22 @@ void setupCube()
     255<<8|255, 255<<16|255, 255<<16|255<<8|255
   };
   for (int i = 0, in = 0, t = 0; i < cube_faces.length; ++t ) {
-    int p2 = cube_faces[i++];
-    int p1 = cube_faces[i++];
-    int p3 = cube_faces[i++];
+    int pi1 = cube_faces[i++];
+    int pi2 = cube_faces[i++];
+    int pi3 = cube_faces[i++];
 
     dot3d n = new dot3d(cube_normals[in++], cube_normals[in++], cube_normals[in++]);
+  /*
+    dot3d p1 = new dot3d(cx[pi1], cy[pi1], cz[pi1]);
+    dot3d p2 = new dot3d(cx[pi2], cy[pi2], cz[pi2]);
+    dot3d p3 = new dot3d(cx[pi3], cy[pi3], cz[pi3]);
+    n = calculateNormal(p1, p2, p3);
+    println(" NT ", n.x, ",", n.y, ",", n.z);
+    */
     cube.normals[t] = n;
 
     int col = cc[t/2];//(100<<8)|((t/2)*40);
-    cube.addTriangle(new Tri(p1, p3, p2, col));
+    cube.addTriangle(new Tri(pi1, pi3, pi2, col));
   }
   for (int vi = 0, i = 0; i < cx.length; ++i) {
     dot3d vn;

@@ -23,25 +23,29 @@ class Object {
     pos = new dot3d(0, 0, 0);
     alwaysVisible = false;
   }
+  
   Object(dot3d[] normals_rotated, dot3d[] vnormals_rotated,
-    int[] mx, int[] my, int[] mz, Tri[] triangles)
+    int[] px, int[] py,int[] plx, int[] ply,int[] plz, Tri[] triangles,
+    boolean[] vis, int[] lum, int[] lv)
 
   {
-    this.mx = mx;
-    this.my = my;
-    this.mz = mz;
+    this.mx = plx;
+    this.my = ply;
+    this.mz = plz;
+    
+    this.px = px;
+    this.py = py;
     this.normals_rotated = normals_rotated;
     this.triangles = triangles;
     for ( nTriangles = 0; triangles[nTriangles] != null; ++nTriangles) {
       /*emtpy*/
     }
     this.maxTriangles = nTriangles;
-    px = new int[mx.length];
-    py = new int[mx.length];
-    lv = new int[mx.length];
     this.vnormals_rotated = vnormals_rotated;
-    visibility = new boolean[maxTriangles];
-    luminity = new int[maxTriangles];
+    visibility = vis;
+    luminity = lum;
+    this.lv = lv;
+    //for(int i = 0; i < lum.length; ++i) print(lum[i]+" ");
     alwaysVisible = false;
   }
 
@@ -132,6 +136,10 @@ class Object {
 
     int cam_cos = co(camera_angle);
     int cam_sin = si(camera_angle);
+
+    int cam_pos_x = (cam_cos * (pos.x-cam.x/256) + cam_sin * (pos.z-cam.z/256)) / 32768;
+    int cam_pos_y = pos.y-cam.z;
+    int cam_pos_z = (-cam_sin * (pos.x-cam.x/256) + cam_cos * (pos.z-cam.z/256)) / 32768;
 
     if ( ax != 0 || ay != 0 || az != 0 ) {
       int a = si(ax);
@@ -233,18 +241,32 @@ class Object {
       }
     }
   }
-  boolean in_sight()
-  {
-    int min_z = far_z;
-    int max_z = 0;
+  boolean objectInFrustum(dot3d camera) {
+    int dx = (pos.x - camera.x/256);
+    //int dy = (pos.y - camera.y);
+    int dz = (pos.z - camera.z/256);
 
-    for (int i = 0; i < oz.length; ++i) {
-      int z = mz[i];
-      //if ( z < 0 ) return false;
-      min_z = z < min_z ? z : min_z;
-      max_z = z > max_z ? z : max_z;
-    }
-    return obj_visible = (min_z >= 0) && (max_z <= far_z);
+    // Nach Kamera-Rotation
+    int cam_cos = co(camera_angle);
+    int cam_sin = si(camera_angle);
+    int cameraZ = (-cam_sin * dx + cam_cos * dz) / 32768;
+
+    // Z-Culling
+    if (cameraZ < near_z || cameraZ > far_z) return false;
+
+    // Optional: X/Y Frustum (FOV-abhängig)
+    int cameraX = (cam_cos * dx + cam_sin * dz) / 32768;
+    int maxX = cameraZ;  // Vereinfacht, abhängig von FOV
+    if (abs(cameraX) > maxX) return false;
+
+    return true;
+  }
+  boolean in_sight(dot3d camera)
+  {
+    int dz = (pos.z - camera.z/256);
+    int dx = (pos.x - camera.x/256);
+    int d = dx*dx+dz*dz;
+    return d < far_z*far_z;
   }
   void visible()
   {
@@ -262,26 +284,27 @@ class Object {
       if ( p3.z < c.z ) {
         c = p3;
       }
-      visibility[i] = true;
-      visibility[i] &= abs(p1.x) < far_x && abs(p2.x) < far_x && abs(p3.x) < far_x;
 
-      visibility[i] = faceIsVisible(c, n);
+      visibility[i] = p1.z > near_z && p2.z > near_z && p3.z > near_z;
+      //visibility[i] &= p1.z < far_z && p2.z < far_z && p3.z < far_z;
+      //  visibility[i] &= abs(p1.x) < far_x && abs(p2.x) < far_x && abs(p3.x) < far_x;
+      visibility[i] &= dot3d.dotProduct(n, c) > 0;
       if ( visibility[i] ) {
         dot3d _lv = nlight;
         if ( directed ) {
           int x = c.x - camera.x/256;
-          x = x < 0 ? x+plsz_x*grid : x;
-          x = x > plsz_x*grid ? x-plsz_x*grid : x;
+          x = x < 0 ? x+worldsize*grid : x;
+          x = x > worldsize*grid ? x-worldsize*grid : x;
           int z = c.z - camera.z/256;
-          z = z < 0 ? z+plsz_z*grid : z;
-          z = z > plsz_z*grid ? z-plsz_z*grid : z;
+          z = z < 0 ? z+worldsize*grid : z;
+          z = z > worldsize*grid ? z-worldsize*grid : z;
           //println(c.x,c.z);
           //dot3d c = p1;//getCenter(p1, p2, p3);
           _lv = new dot3d(light.x - x, light.y - c.y, light.z - z);
           _lv.normalize();
         }
         int lambient = ambient;
-        luminity[i] = max(0, 2*dot3d.dotProduct(n, _lv));
+        luminity[i] = max(0, dot3d.dotProduct(n,_lv));
         if ( darken ) {
           if (c.z > far_z-3*grid ) {
             lambient -= 2*(abs(far_z-3*grid-c.z))*255;

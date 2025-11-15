@@ -17,15 +17,21 @@ void setupBall()
     ball.vnormals[pi1].add(ball.normals[t]);
     ball.vnormals[pi2].add(ball.normals[t]);
     ball.vnormals[pi3].add(ball.normals[t]);
+    // bouncing ball coloring
     int col = 200<<16;
-    if ( t < 12 ) col = 0xe0e0e0;
-    if ( t >= ball.normals.length-12) col = 0x10e0e0;
+    if ( t >= 12 && t <= ball.normals.length-12  ){
+      int q = ((t-12)/24);
+      if ( ((q^t)&3) < 2) col = 0xe0e0e0;
+    } else {
+      if ( (t &1) > 0) col = 0xe0e0e0;
+    }
+
     
-    ball.addTriangle(new Tri(pi1, pi3, pi2, col));
+    ball.addTriangle(new Tri(pi1, pi2, pi3, col));
   }
   for (int i = 0; i < ball.ox.length; ++i ) {
     ball.vnormals[i].normalize();
-    //println(" VNT ",ball.vnormals[i].x,",",ball.vnormals[i].y,",",ball.normals[i].z);
+   // println(" VNT ",ball.vnormals[i].x,",",ball.vnormals[i].y,",",ball.vnormals[i].z);
   }
   println("----------- ball setup done ---------------");
   ball.setPos(200, 100, 600);
